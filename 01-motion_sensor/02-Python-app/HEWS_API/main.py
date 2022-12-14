@@ -11,8 +11,9 @@ sensor_url = "http://192.168.0.121/"
 api_key = "impulse"
 
 alarm_sound = "D:/Project/it_home_early_warning_system/01-motion_sensor/02-Python-app/HEWS_API/sound/sound1.mp3"
-playsound(alarm_sound)
+#alarm_sound = "/home/kijada/pyproject/hews/it_home_early_warning_system/01-motion_sensor/02-Python-app/HEWS_API/sound/sound1.mp3"
 
+playsound(alarm_sound)
 
 class MainWindow(QtWidgets.QWidget):
 
@@ -70,21 +71,25 @@ class MainWindow(QtWidgets.QWidget):
         self.time_counter += 1
 
         if self.enable:
-            response = requests.get(sensor_url + api_key)
-            response = response.json()
+            try:
+                response = requests.get(sensor_url + api_key, timeout=0.25)
+                response = response.json()
 
-            message = "Event: " + str(response["state"]) + " \timpuls count: " + str(response["count"]) + " \t " + str(self.time_counter) + " \t " + str(self.alarm)
-            sys.stdout.write("\r" + message)
+                message = "Event: " + str(response["state"]) + " \timpuls count: " + str(response["count"]) + " \t " + str(self.time_counter) + " \t " + str(self.alarm)
+                sys.stdout.write("\r" + message)
 
-            if (response["count"]):
-                cprint("\nMotion detected!\n", "red")
-                self.alarm = True
-                self.box.setStyleSheet("background-color: #d94430;" + self.label_style)
-                self.box.setText("ALARM !!!")
-                self.time_counter = 0
+                if (response["count"]):
+                    cprint("\nMotion detected!\n", "red")
+                    self.alarm = True
+                    self.box.setStyleSheet("background-color: #d94430;" + self.label_style)
+                    self.box.setText("ALARM !!!")
+                    self.time_counter = 0
 
-                if not self.mute:
-                    playsound(alarm_sound)
+                    if not self.mute:
+                        playsound(alarm_sound)
+            except:
+                message = "Connection timeout"
+                sys.stdout.write("\r" + message)
 
         if self.auto_reset and self.alarm:
             if self.time_counter > 10:
