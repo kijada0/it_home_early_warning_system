@@ -13,6 +13,8 @@ IPAddress local_IP(192, 168, 0, 121);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
+unsigned long time = millis(), previous_time = 0;
+
 void basicResponse(){
   server.send(200, "text/html", "Welcome to the EWS - Early Warning System \nAPI GET: \"/event\" to read events");
 }
@@ -77,4 +79,8 @@ void setup(void) {
  
 void loop(void) {
   server.handleClient();
+
+  if(time - previous_time >= 10)
+    
+
 }
