@@ -4,6 +4,12 @@
 #include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
  
+ // -------------------------------------------------------------------------------- //
+
+#define SENSOR_PIN 0
+
+// -------------------------------------------------------------------------------- //
+
 const char* ssid = "KrólestwoNauki";
 const char* password = "53357007";
  
@@ -13,21 +19,44 @@ IPAddress local_IP(192, 168, 0, 121);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-unsigned long time = millis(), previous_time = 0;
+// -------------------------------------------------------------------------------- //
+
+int impulse_count = 0;
+
+// -------------------------------------------------------------------------------- //
+
+void ICACHE_RAM_ATTR handle_interrupt() {
+  impulse_count ++;
+}
+
+// -------------------------------------------------------------------------------- //
 
 void basicResponse(){
-  server.send(200, "text/html", "Welcome to the EWS - Early Warning System \nAPI GET: \"/event\" to read events");
+  server.send(200, "text/html", "Welcome to the EWS - Early Warning System");
 }
 
-void getEvent(){
-  String message = String(digitalRead(4));
+void getPin(){
+  String message = String(digitalRead(SENSOR_PIN));
   server.send(200, "text/html", message);
 }
- 
-// Define routing
+
+void getImpulse(){
+  String message;
+  message += "{\"state\" : \"";
+  if(impulse_count > 0) message += "true\", ";
+  else message += "false\", ";
+  message += "\"count\" : ";
+  message += String(impulse_count);
+  message += "}";
+
+  server.send(200, "text/html", message);
+  impulse_count = 0;
+}
+
 void restServerRouting() {
     server.on("/", HTTP_GET, basicResponse);
-    server.on("/event", HTTP_GET, getEvent);
+    server.on("/pin", HTTP_GET, getPin);
+    server.on("/impulse", HTTP_GET, getImpulse);
 }
  
 // Manage not found URL
@@ -45,8 +74,13 @@ void handleNotFound() {
   }
   server.send(404, "text/plain", message);
 }
+
+// -------------------------------------------------------------------------------- //
  
 void setup(void) {
+  pinMode(SENSOR_PIN, INPUT);
+  attachInterrupt(SENSOR_PIN, handle_interrupt, RISING);
+
   Serial.begin(115200);
   Serial.println("");
 
@@ -77,10 +111,8 @@ void setup(void) {
   Serial.println("HTTP server started");
 }
  
+// -------------------------------------------------------------------------------- //
+
 void loop(void) {
   server.handleClient();
-
-  if(time - previous_time >= 10)
-    
-
 }
