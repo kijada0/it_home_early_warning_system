@@ -4,8 +4,9 @@ import time
 
 import signal
 import requests
-from termcolor import colored, cprint
 from playsound import playsound
+
+from threading import Thread, Event
 
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
@@ -16,15 +17,23 @@ api_key = "impulse"
 
 sound_file_dir = "sound"
 
-class ApiHandling(QObject):
+class ApiHandling(Thread):
     print("API Thread Run...")
+
+    def run(self):
+        print("run api")
 
     def api_get(self):
         print("api get")
 
-class SoundHandling(QObject):
+class SoundHandling(Thread):
     print("Sound Thread Run...")
+    global_path = "abc"
     sound_lib = []
+
+    def run(self):
+        print("sound init")
+        self.get_sound_list()
 
     def get_sound_list(self):
         current_dir = os.getcwd()
@@ -41,6 +50,10 @@ class SoundHandling(QObject):
             print(sound[1])
             playsound(sound[1])
 
+    def play_sound(self, index):
+        sound_file_path = self.global_path + self.sound_lib[index][1]
+        playsound(sound_file_path)
+
 
 class MainWindow(QtWidgets.QWidget):
     def __init__(self):
@@ -48,16 +61,6 @@ class MainWindow(QtWidgets.QWidget):
         print("Main Thread Run")
 
         self.time_counter = 0
-
-        self.thread = QThread()
-        self.api_thread = ApiHandling()
-        self.api_thread.moveToThread(self.thread)
-        self.soud_thread = SoundHandling();
-        self.soud_thread.moveToThread(self.thread)
-        self.thread.start()
-        print("Thread running...")
-
-        self.soud_thread.get_sound_list()
 
         print("Timer setup... ", end="")
         self.timer = QtCore.QTimer()
@@ -74,10 +77,16 @@ def exit_task(app):
     print("Exit")
 
 def main():
+    sound_thread = SoundHandling()
+    sound_thread.start()
+    api_thread = ApiHandling()
+    api_thread.start()
+
     signal.signal(signal.SIGINT, signal.SIG_DFL)
     app = QtWidgets.QApplication(sys.argv)
     win = MainWindow()
     win.show()
     sys.exit(app.exec_())
+    exit()
 
 main()
