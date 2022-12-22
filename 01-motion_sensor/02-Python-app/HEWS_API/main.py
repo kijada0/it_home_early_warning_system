@@ -1,6 +1,7 @@
 import sys
 import os
 import time
+from datetime import datetime
 
 import signal
 import requests
@@ -15,7 +16,7 @@ from PyQt5.QtGui import *
 sensor_url = "http://192.168.0.121/"
 api_key = "impulse"
 
-sound_file_dir = "sound"
+sound_dir = "sound"
 
 class ApiHandling(Thread):
     print("API Thread Run...")
@@ -28,31 +29,52 @@ class ApiHandling(Thread):
 
 class SoundHandling(Thread):
     print("Sound Thread Run...")
-    global_path = "abc"
+    sound_lib_dir = ""
     sound_lib = []
+    play_loop = False
+    loop_sound = 0
+    loop_period = 5
 
     def run(self):
         print("sound init")
+        self.get_sound_lib_path()
         self.get_sound_list()
 
+        time_now = datetime.now()
+        previous_time = time_now
+
+        self.play_loop = True
+
+        while(True):
+            time_now = datetime.now()
+
+            if (time_now - previous_time).total_seconds() > self.loop_period:
+                print("Time loop")
+                if self.play_loop:
+                    self.play_sound(self.loop_sound)
+                previous_time = datetime.now()
+
+
+    def get_sound_lib_path(self):
+        self.sound_lib_dir = os.getcwd()
+        self.sound_lib_dir = os.path.join(self.sound_lib_dir, sound_dir)
+        print("Sound lib dir:", self.sound_lib_dir)
+
     def get_sound_list(self):
-        current_dir = os.getcwd()
-        print(current_dir)
-        sound_lib_path = os.path.join(current_dir, sound_file_dir)
-        print(sound_lib_path)
-        raw_sound_lib = os.listdir(sound_lib_path)
+        raw_sound_lib = os.listdir(self.sound_lib_dir)
+        print(raw_sound_lib)
+        for sound in raw_sound_lib:
+            try:
+                sound_dir = os.path.join(self.sound_lib_dir, sound)
+                sound_name = sound[0:sound.index(".")]
+                SoundHandling.sound_lib.append([sound_name, sound_dir])
+            except:
+                print("Error sound lib, file:", sound)
 
-        for s in range(len(raw_sound_lib)):
-            sound_path = os.path.join(sound_lib_path, raw_sound_lib[s])
-            SoundHandling.sound_lib.append([s, sound_path])
-
-        for sound in SoundHandling.sound_lib:
-            print(sound[1])
-            playsound(sound[1])
+        print("Sound lib: ", self.sound_lib)
 
     def play_sound(self, index):
-        sound_file_path = self.global_path + self.sound_lib[index][1]
-        playsound(sound_file_path)
+        playsound(self.sound_lib[index][1])
 
 
 class MainWindow(QtWidgets.QWidget):
