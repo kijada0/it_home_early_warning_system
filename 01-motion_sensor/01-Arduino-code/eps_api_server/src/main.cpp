@@ -6,7 +6,7 @@
  
  // -------------------------------------------------------------------------------- //
 
-#define SENSOR_PIN 0
+#define SENSOR_PIN 4
 
 // -------------------------------------------------------------------------------- //
 
@@ -15,7 +15,7 @@ const char* password = "53357007";
  
 ESP8266WebServer server(80);
 
-IPAddress local_IP(192, 168, 0, 121);
+IPAddress local_IP(192, 168, 0, 123);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
@@ -115,4 +115,5 @@ void setup(void) {
 
 void loop(void) {
   server.handleClient();
+
 }
